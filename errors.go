@@ -131,6 +131,11 @@ func (e *Error) WithMessage(format string, i ...interface{}) *Error {
 	return e
 }
 
+func (e *Error) WithMetadata(key string, value interface{}) *Error {
+	e.Metadata[key] = value
+	return e
+}
+
 type operation struct {
 	pkg      string
 	file     string
