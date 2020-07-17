@@ -55,7 +55,6 @@ func (e *Error) Error() string {
 	for tmp != nil {
 		x, ok := tmp.(*Error)
 
-		fmt.Println(ok)
 		if ok {
 			if x.Message != "" {
 				errors = append(errors, x.Message)
@@ -80,7 +79,7 @@ func (e *Error) Error() string {
 	return finalStr
 }
 
-func (e *Error) Stacktrace() string {
+func (e *Error) FormatStacktrace() string {
 	st := ""
 
 	var tmp error = e
@@ -88,7 +87,7 @@ func (e *Error) Stacktrace() string {
 		x, ok := tmp.(*Error)
 
 		if ok {
-			st += fmt.Sprintf("%s.%s:%d => %s", x.op.pkg, x.op.function, x.op.line, x.Message)
+			st += fmt.Sprintf("%s:%d %s.%s => %s", x.op.file, x.op.line, x.op.pkg, x.op.function, x.Message)
 
 			if x.Err != nil {
 				st += "\n  "
@@ -97,6 +96,24 @@ func (e *Error) Stacktrace() string {
 			tmp = x.Err
 		} else {
 			st += tmp.Error()
+			break
+		}
+	}
+
+	return st
+}
+
+func (e *Error) Stacktrace() []string {
+	var st []string
+
+	var tmp error = e
+	for tmp != nil {
+		x, ok := tmp.(*Error)
+
+		if ok {
+			st = append(st, fmt.Sprintf("%s/%s.%s:%d", x.op.file, x.op.pkg, x.op.function, x.op.line))
+			tmp = x.Err
+		} else {
 			break
 		}
 	}
@@ -116,7 +133,7 @@ func (e *Error) WithMessage(format string, i ...interface{}) *Error {
 
 type operation struct {
 	pkg      string
-	fileName string
+	file     string
 	function string
 	line     int
 }
@@ -138,7 +155,7 @@ func newOperation() *operation {
 
 	return &operation{
 		pkg:      packageName,
-		fileName: fileName,
+		file:     fileName,
 		function: funcName,
 		line:     line,
 	}

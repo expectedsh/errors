@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/expectedsh/errors"
 )
@@ -9,7 +10,9 @@ import (
 func main() {
 	t := S{}
 
-	fmt.Println(t.S().Stacktrace())
+	fmt.Println(t.S().FormatStacktrace())
+	fmt.Println(strings.Join(t.S().Stacktrace(), ","))
+	fmt.Println(t.S().Error())
 }
 
 type S struct {
