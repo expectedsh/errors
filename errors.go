@@ -28,9 +28,10 @@ func Wrap(err error, format string, i ...interface{}) *Error {
 	e, ok := err.(*Error)
 
 	newErr := &Error{
-		op:      newOperation(),
-		Message: fmt.Sprintf(format, i...),
-		Err:     err,
+		op:       newOperation(),
+		Message:  fmt.Sprintf(format, i...),
+		metadata: map[string]interface{}{},
+		Err:      err,
 	}
 	if ok {
 		newErr.Kind = e.Kind
@@ -43,7 +44,7 @@ func New(format string, i ...interface{}) *Error {
 	return &Error{
 		op:       newOperation(),
 		Message:  fmt.Sprintf(format, i...),
-		metadata: nil,
+		metadata: map[string]interface{}{},
 		Err:      nil,
 	}
 }
@@ -53,7 +54,7 @@ func NewWithKind(kind Kind, format string, i ...interface{}) *Error {
 		op:       newOperation(),
 		Kind:     kind,
 		Message:  fmt.Sprintf(format, i...),
-		metadata: nil,
+		metadata: map[string]interface{}{},
 		Err:      nil,
 	}
 }
