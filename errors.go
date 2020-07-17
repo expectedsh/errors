@@ -14,35 +14,47 @@ type Error struct {
 	// Kind represent the type of error
 	Kind Kind
 
-	// StatusCode is only for final httpCall
-	StatusCode int
-
 	// Message is the information about the error
 	Message string
 
-	// Metadata is the way to wrap context to the error
-	Metadata map[string]interface{}
+	// metadata is the way to wrap context to the error
+	metadata map[string]interface{}
 
 	// the wrapped error
 	Err error
 }
 
 func Wrap(err error, format string, i ...interface{}) *Error {
-	return &Error{
-		op:         newOperation(),
-		StatusCode: -1,
-		Message:    fmt.Sprintf(format, i...),
-		Err:        err,
+	e, ok := err.(*Error)
+
+	newErr := &Error{
+		op:      newOperation(),
+		Message: fmt.Sprintf(format, i...),
+		Err:     err,
 	}
+	if ok {
+		newErr.Kind = e.Kind
+	}
+
+	return newErr
 }
 
 func New(format string, i ...interface{}) *Error {
 	return &Error{
-		op:         newOperation(),
-		StatusCode: 0,
-		Message:    fmt.Sprintf(format, i...),
-		Metadata:   nil,
-		Err:        nil,
+		op:       newOperation(),
+		Message:  fmt.Sprintf(format, i...),
+		metadata: nil,
+		Err:      nil,
+	}
+}
+
+func NewWithKind(kind Kind, format string, i ...interface{}) *Error {
+	return &Error{
+		op:       newOperation(),
+		Kind:     kind,
+		Message:  fmt.Sprintf(format, i...),
+		metadata: nil,
+		Err:      nil,
 	}
 }
 
@@ -124,24 +136,24 @@ func (e *Error) Stacktrace() []string {
 	return st
 }
 
-func (e *Error) WithStatusCode(statusCode int) *Error {
-	e.StatusCode = statusCode
-	return e
-}
-
 func (e *Error) WithMessage(format string, i ...interface{}) *Error {
 	e.Message = fmt.Sprintf(format, i...)
 	return e
 }
 
 func (e *Error) WithMetadata(key string, value interface{}) *Error {
-	e.Metadata[key] = value
+	e.metadata[key] = value
 	return e
 }
 
 func (e *Error) WithKind(kind Kind) *Error {
 	e.Kind = kind
 	return e
+}
+
+func (e *Error) GetMetadata(key string) (value interface{}, ok bool) {
+	value, ok = e.metadata[key]
+	return value, ok
 }
 
 type operation struct {
