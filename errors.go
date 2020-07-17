@@ -11,6 +11,9 @@ type Error struct {
 	// op is filled by default
 	op *operation
 
+	// Kind represent the type of error
+	Kind Kind
+
 	// StatusCode is only for final httpCall
 	StatusCode int
 
@@ -133,6 +136,11 @@ func (e *Error) WithMessage(format string, i ...interface{}) *Error {
 
 func (e *Error) WithMetadata(key string, value interface{}) *Error {
 	e.Metadata[key] = value
+	return e
+}
+
+func (e *Error) WithKind(kind Kind) *Error {
+	e.Kind = kind
 	return e
 }
 
