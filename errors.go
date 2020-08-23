@@ -187,6 +187,11 @@ func (e *Error) WithKind(kind Kind) *Error {
 	return e
 }
 
+func (e *Error) WithOpHere() *Error {
+	e.op = newOperation()
+	return e
+}
+
 func (e *Error) GetField(key string) (value interface{}, ok bool) {
 	value, ok = e.fields[key]
 	return value, ok
