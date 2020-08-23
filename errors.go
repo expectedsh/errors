@@ -174,6 +174,14 @@ func (e *Error) WithField(key string, value interface{}) *Error {
 	e.fields[key] = value
 	return e
 }
+
+func (e *Error) WithFields(m map[string]interface{}) *Error {
+	for k, v := range m {
+		e.fields[k] = v
+	}
+	return e
+}
+
 func (e *Error) WithKind(kind Kind) *Error {
 	e.Kind = kind
 	return e
