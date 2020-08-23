@@ -1,18 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/expectedsh/errors"
 )
 
 func main() {
 	t := S{}
 
-	fmt.Println(t.S().FormatStacktrace())
-	fmt.Println(strings.Join(t.S().Stacktrace(), ","))
-	fmt.Println(t.S().Error())
+	t.S().Log().Error()
 }
 
 type S struct {
@@ -25,7 +20,7 @@ func (s S) S() *errors.Error {
 func X() *errors.Error {
 	t := T()
 
-	return errors.Wrap(t, "xdlol")
+	return errors.Wrap(t, "xdlol").WithField("lol", 123)
 }
 
 func T() *errors.Error {

@@ -5,6 +5,8 @@ import (
 	"path"
 	"runtime"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Error struct {
@@ -17,8 +19,8 @@ type Error struct {
 	// Message is the information about the error
 	Message string
 
-	// metadata is the way to wrap context to the error
-	metadata map[string]interface{}
+	// fields is the way to wrap context to the error
+	fields map[string]interface{}
 
 	// the wrapped error
 	Err error
@@ -28,13 +30,14 @@ func Wrap(err error, format string, i ...interface{}) *Error {
 	e, ok := err.(*Error)
 
 	newErr := &Error{
-		op:       newOperation(),
-		Message:  fmt.Sprintf(format, i...),
-		metadata: map[string]interface{}{},
-		Err:      err,
+		op:      newOperation(),
+		Message: fmt.Sprintf(format, i...),
+		fields:  map[string]interface{}{},
+		Err:     err,
 	}
 	if ok {
 		newErr.Kind = e.Kind
+		newErr.fields = e.fields
 	}
 
 	return newErr
@@ -42,20 +45,20 @@ func Wrap(err error, format string, i ...interface{}) *Error {
 
 func New(format string, i ...interface{}) *Error {
 	return &Error{
-		op:       newOperation(),
-		Message:  fmt.Sprintf(format, i...),
-		metadata: map[string]interface{}{},
-		Err:      nil,
+		op:      newOperation(),
+		Message: fmt.Sprintf(format, i...),
+		fields:  map[string]interface{}{},
+		Err:     nil,
 	}
 }
 
 func NewWithKind(kind Kind, format string, i ...interface{}) *Error {
 	return &Error{
-		op:       newOperation(),
-		Kind:     kind,
-		Message:  fmt.Sprintf(format, i...),
-		metadata: map[string]interface{}{},
-		Err:      nil,
+		op:      newOperation(),
+		Kind:    kind,
+		Message: fmt.Sprintf(format, i...),
+		fields:  map[string]interface{}{},
+		Err:     nil,
 	}
 }
 
@@ -84,15 +87,7 @@ func (e *Error) Error() string {
 		}
 	}
 
-	finalStr := ""
-	for i := len(errors) - 1; i >= 0; i-- {
-		finalStr += errors[i]
-		if i != 0 {
-			finalStr += ": "
-		}
-	}
-
-	return finalStr
+	return strings.Join(errors, ": ")
 }
 
 func (e *Error) FormatStacktrace() string {
@@ -127,7 +122,40 @@ func (e *Error) Stacktrace() []string {
 		x, ok := tmp.(*Error)
 
 		if ok {
-			st = append(st, fmt.Sprintf("%s/%s.%s:%d", x.op.file, x.op.pkg, x.op.function, x.op.line))
+			st = append(st,
+				fmt.Sprintf(
+					"%s/%s.%s:%d",
+					x.op.file,
+					x.op.pkg,
+					x.op.function,
+					x.op.line,
+				))
+			tmp = x.Err
+		} else {
+			break
+		}
+	}
+
+	return st
+}
+
+func (e *Error) StacktraceWithMessage() []string {
+	var st []string
+
+	var tmp error = e
+	for tmp != nil {
+		x, ok := tmp.(*Error)
+
+		if ok {
+			st = append(st,
+				fmt.Sprintf(
+					"%s/%s.%s:%d ; %s",
+					x.op.file,
+					x.op.pkg,
+					x.op.function,
+					x.op.line,
+					x.Message,
+				))
 			tmp = x.Err
 		} else {
 			break
@@ -142,19 +170,25 @@ func (e *Error) WithMessage(format string, i ...interface{}) *Error {
 	return e
 }
 
-func (e *Error) WithMetadata(key string, value interface{}) *Error {
-	e.metadata[key] = value
+func (e *Error) WithField(key string, value interface{}) *Error {
+	e.fields[key] = value
 	return e
 }
-
 func (e *Error) WithKind(kind Kind) *Error {
 	e.Kind = kind
 	return e
 }
 
-func (e *Error) GetMetadata(key string) (value interface{}, ok bool) {
-	value, ok = e.metadata[key]
+func (e *Error) GetField(key string) (value interface{}, ok bool) {
+	value, ok = e.fields[key]
 	return value, ok
+}
+
+func (e *Error) Log() *logrus.Entry {
+	return logrus.
+		WithFields(e.fields).
+		WithField("stacktrace", strings.Join(e.Stacktrace(), ", ")).
+		WithError(e)
 }
 
 type operation struct {
