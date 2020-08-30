@@ -7,7 +7,7 @@ import (
 func main() {
 	t := S{}
 
-	t.S().Log().Error()
+	println(t.S().FormatStacktrace())
 }
 
 type S struct {
@@ -20,7 +20,9 @@ func (s S) S() *errors.Error {
 func X() *errors.Error {
 	t := T()
 
-	return errors.Wrap(t, "xdlol").WithField("lol", 123)
+	return errors.Wrap(t, "xdlol").
+		WithField("lol", 123).
+		WithField("xxxxxxxxxxxlol", "2345")
 }
 
 func T() *errors.Error {

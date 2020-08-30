@@ -1,10 +1,12 @@
 package errors
 
 import (
+	"bytes"
 	"fmt"
 	"path"
 	"runtime"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/sirupsen/logrus"
 )
@@ -91,14 +93,15 @@ func (e *Error) Error() string {
 }
 
 func (e *Error) FormatStacktrace() string {
-	st := ""
+	st := "Start stacktrace.........\n\n"
 
 	var tmp error = e
 	for tmp != nil {
 		x, ok := tmp.(*Error)
 
 		if ok {
-			st += fmt.Sprintf("%s:%d %s.%s => %s", x.op.file, x.op.line, x.op.pkg, x.op.function, x.Message)
+			line := fmt.Sprintf("%s:%d %s.%s => %s", x.op.file, x.op.line, x.op.pkg, x.op.function, x.Message)
+			st += line
 
 			if x.Err != nil {
 				st += "\n  "
@@ -110,6 +113,20 @@ func (e *Error) FormatStacktrace() string {
 			break
 		}
 	}
+
+	if len(e.fields) > 0 {
+		st += fmt.Sprintf("\n\nFields:\n")
+		buffer := bytes.NewBuffer([]byte{})
+		w := tabwriter.NewWriter(buffer, 0, 0, 3, ' ', tabwriter.TabIndent)
+		for k, v := range e.fields {
+			fmt.Fprintf(w, "%s\t%v\n", k, v)
+
+		}
+		w.Flush()
+		st += buffer.String()
+	}
+
+	st += "\nEnd stacktrace............\n"
 
 	return st
 }
@@ -125,8 +142,8 @@ func (e *Error) Stacktrace() []string {
 			st = append(st,
 				fmt.Sprintf(
 					"%s/%s.%s:%d",
-					x.op.file,
 					x.op.pkg,
+					x.op.file,
 					x.op.function,
 					x.op.line,
 				))
