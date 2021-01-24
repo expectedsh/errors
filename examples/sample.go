@@ -5,26 +5,26 @@ import (
 )
 
 func main() {
-	t := S{}
+	t := Structure{}
 
-	println(t.S().FormatStacktrace())
+	println(t.SuperCaller().FormatStacktrace())
 }
 
-type S struct {
+type Structure struct {
 }
 
-func (s S) S() *errors.Error {
-	return errors.Wrap(X(), "s has not pass the test")
+func (s Structure) SuperCaller() *errors.Error {
+	return errors.Wrap(FirstChild(), "error while declaring fields")
 }
 
-func X() *errors.Error {
-	t := T()
+func FirstChild() *errors.Error {
+	t := SecondChildTheOler()
 
-	return errors.Wrap(t, "xdlol").
+	return errors.Wrap(t, "error always returned :)").
 		WithField("lol", 123).
 		WithField("xxxxxxxxxxxlol", "2345")
 }
 
-func T() *errors.Error {
-	return errors.New("test %d", 5)
+func SecondChildTheOler() *errors.Error {
+	return errors.New("I am just failing: %d", 5)
 }

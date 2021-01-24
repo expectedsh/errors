@@ -93,18 +93,27 @@ func (e *Error) Error() string {
 }
 
 func (e *Error) FormatStacktrace() string {
-	st := "Start stacktrace.........\n\n"
+	st := ColorRed + "┌─────────────────────────────────────────────\n│ DEBUG ERROR: "
+
+	const space = "  "
 
 	var tmp error = e
+	isFirst := true
 	for tmp != nil {
 		x, ok := tmp.(*Error)
 
 		if ok {
-			line := fmt.Sprintf("%s:%d %s.%s => %s", x.op.file, x.op.line, x.op.pkg, x.op.function, x.Message)
-			st += line
+			if isFirst {
+				st += fmt.Sprintf("%s%q%s", ColorTeal, x.Message, ColorRed) + "\n│" + space
+				st += fmt.Sprintf("at %s:%d %s.%s %s%s%s", x.op.file, x.op.line, x.op.pkg, x.op.function, ColorPurple, "<- error happened here", ColorRed)
+				isFirst = false
+			} else {
+				st += fmt.Sprintf("at %s:%d %s.%s => %s%q%s", x.op.file, x.op.line, x.op.pkg, x.op.function, ColorTeal, x.Message, ColorRed)
+
+			}
 
 			if x.Err != nil {
-				st += "\n  "
+				st += "\n│" + space
 			}
 
 			tmp = x.Err
@@ -115,18 +124,18 @@ func (e *Error) FormatStacktrace() string {
 	}
 
 	if len(e.fields) > 0 {
-		st += fmt.Sprintf("\n\nFields:\n")
+		st += fmt.Sprintf("\n│\n│ FIELDS ATTACHED:\n")
 		buffer := bytes.NewBuffer([]byte{})
 		w := tabwriter.NewWriter(buffer, 0, 0, 3, ' ', tabwriter.TabIndent)
 		for k, v := range e.fields {
-			fmt.Fprintf(w, "%s\t%v\n", k, v)
+			fmt.Fprintf(w, "│ %s%q\t%s%v%s\n", ColorTeal, k, ColorMagenta, v, ColorRed)
 
 		}
 		w.Flush()
 		st += buffer.String()
 	}
 
-	st += "\nEnd stacktrace............\n"
+	st += "\n"
 
 	return st
 }
