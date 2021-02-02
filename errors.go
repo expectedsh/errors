@@ -135,7 +135,7 @@ func (e *Error) FormatStacktrace() string {
 		st += buffer.String()
 	}
 
-	st += "\n"
+	st += "\n" + ColorReset
 
 	return st
 }
